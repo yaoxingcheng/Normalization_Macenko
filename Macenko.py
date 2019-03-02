@@ -54,15 +54,15 @@ def transform(simgname, hema = 1, eo = 1):
 	if eo:
 		return source_image,eoxin
 	return source_image
+target_image_name = "b001_0.png"
+target_image = cv.imread(target_image_name)
+target_image = cv.cvtColor(target_image, cv.COLOR_BGR2RGB)
+target_od = toOD(target_image).reshape((-1,3))
+target_stain_matrix = get_stain_matrix(target_od)
+target_concentration = get_concentration(target_od, stain_matrix = target_stain_matrix)
+target_max = np.percentile(target_concentration, 99, axis = 0)
 if __name__ == '__main__':
 	start = tm.time()
-	target_image_name = "b001_0.png"
-	target_image = cv.imread(target_image_name)
-	target_image = cv.cvtColor(target_image, cv.COLOR_BGR2RGB)
-	target_od = toOD(target_image).reshape((-1,3))
-	target_stain_matrix = get_stain_matrix(target_od)
-	target_concentration = get_concentration(target_od, stain_matrix = target_stain_matrix)
-	target_max = np.percentile(target_concentration, 99, axis = 0)
 	with open("image_process.txt") as fp:
 		names = fp.read().splitlines()
 #	print(names)
