@@ -1,0 +1,2 @@
+# Normalization_Macenko
+这是利用Python实现的由Macenko等人提出的基于SVD的医疗图像规范化算法。代码中包括get_stain_matrix函数，其输入是转化到OD空间的图像矩阵；transform函数，其输入是source image的名字，可以根据规定好的target image对其进行规范化。另外两个参数（hema 与 eo， 默认为 1）表示是否需要提取图像中的两种染色成分。
