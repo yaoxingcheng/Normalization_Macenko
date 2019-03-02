@@ -32,37 +32,48 @@ def get_hematoxylin(concentration, stain_matrix, shape):
 	return (255 * np.exp(-1 * np.dot(concentration[:, 0].reshape(-1,1), stain_matrix[0,:].reshape(-1,3)).reshape(shape))).astype(np.uint8)
 def get_eoxin(concentration, stain_matrix, shape):
 	return (255 * np.exp(-1 * np.dot(concentration[:, 1].reshape(-1,1), stain_matrix[1,:].reshape(-1,3)).reshape(shape))).astype(np.uint8)
-
-start = tm.time()
-target_image_name = "b001_0.png"
-target_image = cv.imread(target_image_name)
-target_image = cv.cvtColor(target_image, cv.COLOR_BGR2RGB)
-target_od = toOD(target_image).reshape((-1,3))
-target_stain_matrix = get_stain_matrix(target_od)
-target_concentration = get_concentration(target_od, stain_matrix = target_stain_matrix)
-target_max = np.percentile(target_concentration, 99, axis = 0)
-with open("image_process.txt") as fp:
-	names = fp.read().splitlines()
+def transform(simgname, hema = 1, eo = 1):
+	source_image = cv.imread(simgname)
+	source_image = cv.cvtColor(source_image, cv.COLOR_BGR2RGB)
+	shape = source_image.shape
+	source_od = toOD(source_image).reshape((-1,3))
+	source_stain_matrix = get_stain_matrix(source_od)
+	source_concentration = get_concentration(source_od, stain_matrix = source_stain_matrix)
+	source_max = np.percentile(target_concentration, 99, axis = 0)
+	source_concentration *= (target_max/source_max)
+	source_od = np.dot(source_concentration, target_stain_matrix) 
+	source_image = toRGB(source_od).reshape(shape)
+	if hema:
+		hematoxylin = get_hematoxylin(source_concentration, target_stain_matrix, shape)
+	if eo:
+		eoxin = get_eoxin(source_concentration, target_stain_matrix, shape)
+	if hema and eo:
+		return source_image,hematoxylin,eoxin
+	if hema:
+		return source_image,hematoxylin
+	if eo:
+		return source_image,eoxin
+	return source_image
+if __name__ == '__main__':
+	start = tm.time()
+	target_image_name = "b001_0.png"
+	target_image = cv.imread(target_image_name)
+	target_image = cv.cvtColor(target_image, cv.COLOR_BGR2RGB)
+	target_od = toOD(target_image).reshape((-1,3))
+	target_stain_matrix = get_stain_matrix(target_od)
+	target_concentration = get_concentration(target_od, stain_matrix = target_stain_matrix)
+	target_max = np.percentile(target_concentration, 99, axis = 0)
+	with open("image_process.txt") as fp:
+		names = fp.read().splitlines()
 #	print(names)
-	for simgname in names:
-		if simgname != '':
-			simgname.strip()
-			simgname.strip('\n')
-			source_image = cv.imread(simgname)
-			source_image = cv.cvtColor(source_image, cv.COLOR_BGR2RGB)
-			shape = source_image.shape
-			source_od = toOD(source_image).reshape((-1,3))
-			source_stain_matrix = get_stain_matrix(source_od)
-			source_concentration = get_concentration(source_od, stain_matrix = source_stain_matrix)
-			source_max = np.percentile(target_concentration, 99, axis = 0)
-			source_concentration *= (target_max/source_max)
-			source_od = np.dot(source_concentration, target_stain_matrix) 
-			source_image = toRGB(source_od).reshape(shape)
-			hematoxylin = get_hematoxylin(source_concentration, target_stain_matrix, shape)
-			eoxin = get_eoxin(source_concentration, target_stain_matrix, shape)
-			cv.imwrite("PY_TR_"+simgname, source_image)
-			cv.imwrite("HE_OF_"+simgname, hematoxylin)
-			cv.imwrite("EO_OF_"+simgname, eoxin)
-			print(simgname + "normalized successfully")
-end = tm.time()
-print(end - start)
+		for simgname in names:
+			if simgname != '':
+				simgname.strip()
+				simgname.strip('\n')
+				source_image = transform(simgname, 0, 0)
+				cv.imwrite("PY_TR_"+simgname, source_image)
+				#cv.imwrite("HE_OF_"+simgname, hematoxylin)
+				#cv.imwrite("EO_OF_"+simgname, eoxin)
+				print(simgname + " normalized successfully")
+	end = tm.time()
+	print(end - start)
